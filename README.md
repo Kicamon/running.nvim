@@ -11,12 +11,12 @@
 
 ```lua
 {
-    "Kicamon/running.nvim",
-    lazy = true,
-    cmd = "Run",
-    config = function()
-        require('running').setup()
-    end
+  "Kicamon/running.nvim",
+  lazy = true,
+  cmd = "Run",
+  config = function()
+    require('running').setup()
+  end
 }
 ```
 
@@ -37,43 +37,43 @@ lua require('running').setup()
 defualt config
 ```lua
 require('running').setup({
-    commands = require('running.commands'),
-    win = {
-        defualt = {
-            width = -0.25,
-            height = 0.9,
-            row = 't',
-            col = 'r',
-        },
-        center = {
-            width = 0.8,
-            height = 0.8,
-            row = 'c',
-            col = 'c',
-        },
+  commands = require('running.commands'),
+  win = {
+    defualt = {
+      width = -0.25,
+      height = 0.9,
+      row = 't',
+      col = 'r',
     },
+    center = {
+      width = 0.8,
+      height = 0.8,
+      row = 'c',
+      col = 'c',
+    },
+  },
 })
 ```
 
 ### Set Language command
 ```lua
 require('running').setup({
-    commands = {
-        ['c'] = {
-            command = {
-                'gcc "$filename" -o "$runfile"',
-                './"$runfile"',
-            },
-        },
-        ['html'] = {
-            command = 'live-server',
-            modus = 'job', -- run a shell command
-        },
-        ['markdown'] = {
-            command = 'MarkdownPreview',
-            modus = 'cmd', -- execute a vim command
-        }
+  commands = {
+    ['c'] = {
+      command = {
+        'gcc "$filename" -o "$runfile"',
+        './"$runfile"',
+      },
+    },
+    ['html'] = {
+      command = 'live-server',
+      modus = 'job', -- run a shell command
+    },
+    ['markdown'] = {
+      command = 'MarkdownPreview',
+      modus = 'cmd', -- execute a vim command
     }
+  }
 })
 ```
 

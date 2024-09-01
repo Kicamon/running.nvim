@@ -7,7 +7,7 @@ return {
   },
   ['cpp'] = {
     command = {
-      'g++ "$filename" -std=c++17 -O2 -g -Wall -o "$runfile"',
+      'g++ "$filename" -o "$runfile"',
       './"$runfile"',
     },
   },
