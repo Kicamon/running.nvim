@@ -26,6 +26,11 @@ local function get_commands()
   local runfile = vim.fn.expand('%<')
 
   local opt = config.commands[filetype]
+
+  if not opt then
+    return opt
+  end
+
   if type(opt.command) == 'table' then
     local tmp = ''
     ---@diagnostic disable-next-line: param-type-mismatch
@@ -83,7 +88,10 @@ local function running(center)
       running_window(opt.command, center)
     end
   else
-    vim.notify('Undefined\n')
+    vim.notify(
+      string.format('%s running command undefined\n', vim.bo.filetype),
+      vim.log.levels.WARN
+    )
   end
 
   vim.cmd('silent! lcd ' .. workpath)
