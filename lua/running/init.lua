@@ -3,7 +3,7 @@ local api = vim.api
 local infos = {}
 
 local config = {
-  commands = require('running.commands'),
+  commands = require('running.commands').get_commands(),
   win = {
     defualt = {
       width = -0.25,
@@ -20,12 +20,11 @@ local config = {
   },
 }
 
-local function get_commands()
-  local filetype = vim.bo.filetype
+local function get_commands(args)
   local filename = vim.fn.expand('%')
   local runfile = vim.fn.expand('%<')
 
-  local opt = config.commands[filetype]
+  local opt = config.commands[args]
 
   if not opt then
     return opt
@@ -71,14 +70,39 @@ local function running_window(opt, center)
   vim.cmd.term(opt)
 end
 
-local function running(center)
+---split a string by last space
+---@param str string
+---@return string
+---@return boolean
+local function split_by_last_space(str)
+  local last_space = str:match('.*()%s')
+
+  if not last_space then
+    if str == 'center' then
+      return '', true
+    else
+      return str, false
+    end
+  end
+
+  local first_part = str:sub(1, last_space - 1)
+  local second_part = str:sub(last_space + 1) == 'center'
+
+  return first_part, second_part
+end
+
+---quick running code
+---@param args string
+local function running(args)
   vim.cmd('w')
 
   local workpath = vim.fn.getcwd()
-
+  local center = false
+  args, center = split_by_last_space(args)
+  args = #args == 0 and vim.bo.filetype or args
   vim.cmd('silent! lcd %:p:h')
 
-  local opt = get_commands()
+  local opt = get_commands(args)
   if opt then
     if opt.modus == 'job' then
       vim.fn.jobstart(opt.command)
@@ -88,10 +112,7 @@ local function running(center)
       running_window(opt.command, center)
     end
   else
-    vim.notify(
-      string.format('%s running command undefined\n', vim.bo.filetype),
-      vim.log.levels.WARN
-    )
+    vim.notify(string.format('%s running command is undefined\n', args), vim.log.levels.WARN)
   end
 
   vim.cmd('silent! lcd ' .. workpath)
@@ -101,11 +122,16 @@ local function setup(opts)
   config = vim.tbl_extend('force', config, opts or {})
 
   api.nvim_create_user_command('Run', function(args)
-    running(args.args == 'center')
+    running(args.args)
   end, {
+    range = true,
     nargs = '?',
-    complete = function()
-      return { 'center' }
+    complete = function(arg)
+      local list =
+        vim.tbl_extend('force', require('running.commands').commands_list(), { 'center' })
+      return vim.tbl_filter(function(s)
+        return string.match(s, '^' .. arg)
+      end, list)
     end,
   })
 end
