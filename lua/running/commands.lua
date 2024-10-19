@@ -13,6 +13,13 @@ local commands = {
       './"$runfile"',
     },
   },
+  ['make'] = {
+    command = {
+      'cd $workspace',
+      'make test',
+    },
+    modus = 'center',
+  },
   ['rust'] = {
     command = {
       'rustc "$filename"',

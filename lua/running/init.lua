@@ -1,5 +1,6 @@
+---@diagnostic disable: param-type-mismatch
 local win = require('running.window')
-local api = vim.api
+local api, expand = vim.api, vim.fn.expand
 local infos = {}
 
 local config = {
@@ -20,9 +21,12 @@ local config = {
   },
 }
 
+---get running command and running modus by filetype
+---@return table {command: string, modus: string}
 local function get_commands(args)
-  local filename = vim.fn.expand('%')
-  local runfile = vim.fn.expand('%<')
+  local filename = expand('%')
+  local runfile = expand('%<')
+  local workspace = vim.lsp.buf.list_workspace_folders()[1] or ''
 
   local opt = config.commands[args]
 
@@ -31,20 +35,20 @@ local function get_commands(args)
   end
 
   if type(opt.command) == 'table' then
-    local tmp = ''
-    ---@diagnostic disable-next-line: param-type-mismatch
-    for i, val in ipairs(opt.command) do
-      tmp = tmp .. (i ~= 1 and ' && ' or '') .. val
-    end
-    opt.command = tmp
+    opt.command = vim.iter(opt.command):fold('', function(acc, item)
+      return acc == '' and item or acc .. ' && ' .. item
+    end)
   end
 
-  ---@diagnostic disable-next-line: param-type-mismatch
-  opt.command = opt.command:gsub('$filename', filename):gsub('$runfile', runfile)
+  opt.command =
+    opt.command:gsub('$filename', filename):gsub('$runfile', runfile):gsub('$workspace', workspace)
 
   return opt
 end
 
+---create float window to running the command
+---@param opt table
+---@param center boolean
 local function running_window(opt, center)
   local float_opt = {
     relative = 'editor',
@@ -54,16 +58,17 @@ local function running_window(opt, center)
   float_opt =
     vim.tbl_extend('force', float_opt, (center and config.win.center or config.win.defualt) or {})
 
-  infos.bufnr, infos.winid = win:new_float(float_opt, true, true):wininfo()
+  infos.bufnr, infos.winid =
+    win:new_float(float_opt, true, true):bufopt('bufhidden', 'hide'):wininfo()
 
   api.nvim_create_autocmd('WinClosed', {
     buffer = infos.bufnr,
     callback = function()
       if infos.winid and api.nvim_win_is_valid(infos.winid) then
         api.nvim_win_close(infos.winid, true)
-        api.nvim_buf_delete(infos.bufnr, { force = true })
-        infos.winid = nil
       end
+      api.nvim_buf_delete(infos.bufnr, { force = true })
+      infos.winid = nil
     end,
   })
 
@@ -109,10 +114,11 @@ local function running(args)
     elseif opt.modus == 'cmd' then
       vim.cmd(opt.command)
     else
+      center = center or opt.modus == 'center'
       running_window(opt.command, center)
     end
   else
-    vim.notify(string.format('%s running command is undefined\n', args), vim.log.levels.WARN)
+    vim.notify(string.format("%s's running command is undefined\n", args), vim.log.levels.WARN)
   end
 
   vim.cmd('silent! lcd ' .. workpath)
