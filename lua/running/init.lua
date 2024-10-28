@@ -1,4 +1,3 @@
----@diagnostic disable: param-type-mismatch
 local win = require('running.window')
 local api, expand = vim.api, vim.fn.expand
 local infos = {}
@@ -28,16 +27,15 @@ local function get_commands(args)
   local runfile = expand('%<')
   local workspace = vim.lsp.buf.list_workspace_folders()[1] or ''
 
-  local opt = config.commands[args]
+  local opt = vim.deepcopy(config.commands[args])
 
   if not opt then
     return opt
   end
 
   if type(opt.command) == 'table' then
-    opt.command = vim.iter(opt.command):fold('', function(acc, item)
-      return acc == '' and item or acc .. ' && ' .. item
-    end)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    opt.command = table.concat(opt.command, ' && ')
   end
 
   opt.command =
